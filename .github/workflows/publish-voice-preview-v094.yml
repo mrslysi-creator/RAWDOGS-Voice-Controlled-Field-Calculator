@@ -31,7 +31,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+          original='dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+          zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator.zip'
+          cp "$original" "$zip"
+          cmp "$original" "$zip"
           mkdir -p src/windows docs
           unzip -qo "$zip" '*.go' '*.syso' '*.ico' 'camo_*.png' 'assets/*' -d src/windows
           unzip -qjo "$zip" 'README_2_43_19.md' 'TEST_CHECKLIST_v0.9.4.md' 'GUIDE_INDEX_AND_SCRIPT_2_43_19.md' -d docs
@@ -49,6 +52,7 @@ jobs:
           zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
           if gh release view v0.9.4-preview >/dev/null 2>&1; then
             gh release upload v0.9.4-preview "$zip" --clobber
+            gh release delete-asset v0.9.4-preview 'RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip' --yes
             gh release edit v0.9.4-preview --prerelease --notes-file previews/v0.9.4/RELEASE_NOTES.md
           else
             gh release create v0.9.4-preview "$zip" \
