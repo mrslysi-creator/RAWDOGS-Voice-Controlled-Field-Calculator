@@ -1,0 +1,59 @@
+name: Publish independent RAWDOGS v0.9.4 Windows voice preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'previews/v0.9.4/base64/**'
+      - 'previews/v0.9.4/SHA256SUMS.txt'
+      - '.github/workflows/publish-voice-preview-v094.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-preview:
+    name: Verify original ZIP, expose source and publish preview release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Reconstruct and validate the original ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cat previews/v0.9.4/base64/part-*.b64 | base64 --decode > 'dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+          ( cd dist && sha256sum --check ../previews/v0.9.4/SHA256SUMS.txt )
+          unzip -tqq 'dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+      - name: Expose original Go source and build notes in the repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+          mkdir -p src/windows docs
+          unzip -qo "$zip" '*.go' '*.syso' '*.ico' 'camo_*.png' 'assets/*' -d src/windows
+          unzip -qjo "$zip" 'README_2_43_19.md' 'TEST_CHECKLIST_v0.9.4.md' 'GUIDE_INDEX_AND_SCRIPT_2_43_19.md' -d docs
+          git add src/windows docs
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Expose original v0.9.4 Go source, assets and documentation'
+            git push origin HEAD:main
+          fi
+      - name: Publish own standalone GitHub pre-release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+          if gh release view v0.9.4-preview >/dev/null 2>&1; then
+            gh release upload v0.9.4-preview "$zip" --clobber
+            gh release edit v0.9.4-preview --prerelease --notes-file previews/v0.9.4/RELEASE_NOTES.md
+          else
+            gh release create v0.9.4-preview "$zip" \
+              --target main \
+              --prerelease \
+              --title 'RAWDOGS Voice Controlled Field Calculator v0.9.4 Preview' \
+              --notes-file previews/v0.9.4/RELEASE_NOTES.md
+          fi
