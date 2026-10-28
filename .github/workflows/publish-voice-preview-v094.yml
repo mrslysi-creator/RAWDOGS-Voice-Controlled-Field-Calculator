@@ -49,10 +49,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip'
+          zip='dist/RAWDOGS_Voice_Controlled_Field_Calculator.zip'
           if gh release view v0.9.4-preview >/dev/null 2>&1; then
             gh release upload v0.9.4-preview "$zip" --clobber
-            gh release delete-asset v0.9.4-preview 'RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip' --yes
+            gh release delete-asset v0.9.4-preview 'RAWDOGS_Voice_Controlled_Field_Calculator_v0.9.4_Clean_Walkman_WINDOWS_EXE_AND_SOURCE.zip' --yes || true
             gh release edit v0.9.4-preview --prerelease --notes-file previews/v0.9.4/RELEASE_NOTES.md
           else
             gh release create v0.9.4-preview "$zip" \
